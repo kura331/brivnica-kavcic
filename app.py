@@ -22,7 +22,7 @@ try:
     creds = Credentials.from_service_account_file("creds.json", scopes=scope)
     client = gspread.authorize(creds)
     # Prepričaj se, da se tvoja tabela imenuje točno tako!
-    sheet = client.open("BarberBooking").sheet1
+    sheet = client.open("BarberBooking").get_worksheet(0)
 except Exception as e:
     st.error("Napaka pri povezavi z bazo. Preveri creds.json in dostop do tabele.")
     st.stop()
