@@ -3,67 +3,60 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 
-# 1. NASTAVITVE STRANI
-st.set_page_config(page_title="Kavčič Cuts | Rezervacije", page_icon="✂️")
+# 1. KONFIGURACIJA
+st.set_page_config(page_title="Kavčič Cuts", page_icon="✂️")
 
-# Stilski popravek za bolj resen videz (brez odvečnega okraševanja)
+# Glavni naslov brez nepotrebnih podnapisov
 st.title("KAVČIČ CUTS")
-st.subheader("Moško striženje in urejanje brade")
-st.info("📍 Šegova ulica 14, Novo mesto")
+st.write("📍 Šegova ulica 14, Novo mesto")
 st.markdown("---")
 
-# 2. FUNKCIJA ZA POVEZAVO
-def get_gspread_client():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds_info = dict(st.secrets["gcp_service_account"])
-    
-    # Čiščenje ključa za preprečevanje napak
-    raw_key = creds_info["private_key"]
-    clean_key = raw_key.replace("\\n", "\n").replace(r"\n", "\n")
-    creds_info["private_key"] = clean_key
-    
-    creds = Credentials.from_service_account_info(creds_info, scopes=scope)
-    return gspread.authorize(creds)
-
-try:
-    client = get_gspread_client()
-    sheet = client.open("BarberBooking").get_worksheet(0)
-    
-    # 3. OBRAZEC ZA REZERVACIJO
-    st.markdown("### Rezervacija termina")
-    st.write("Prosimo, vnesite svoje podatke za rezervacijo. Kontaktirali vas bomo za potrditev ure.")
-    
-    with st.form("booking_form", clear_on_submit=True):
-        ime = st.text_input("Ime in priimek")
-        telefon = st.text_input("Telefonska številka")
-        datum = st.date_input("Želeni datum", min_value=datetime.today())
+# 2. POVEZAVA (Očiščena vseh napak iz prejšnjih slik)
+def poveži_tabelo():
+    try:
+        # Preberemo Secrets kot slovar
+        info = dict(st.secrets["gcp_service_account"])
         
-        submit = st.form_submit_button("ODDAJ REZERVACIJO")
+        # Popravek za PEM napako (MalformedFraming)
+        if "private_key" in info:
+            info["private_key"] = info["private_key"].replace("\\n", "\n")
+            
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = Credentials.from_service_account_info(info, scopes=scope)
+        client = gspread.authorize(creds)
+        return client.open("BarberBooking").get_worksheet(0)
+    except:
+        return None
 
-    if submit:
-        if ime and telefon:
-            # Zapis v bazo
-            sheet.append_row([ime, telefon, str(datum), "Novo naročilo"])
-            st.success(f"Sprejeto. Rezervacija na ime {ime} za datum {datum} je bila uspešno oddana.")
-            # Baloni so odstranjeni za bolj resen videz
-        else:
-            st.error("Napaka: Prosimo, izpolnite vsa obvezna polja (ime in telefon).")
+# Izvedba povezave
+sheet = poveži_tabelo()
 
-    st.markdown("---")
-    
-    # ADMIN DEL (Diskretno spodaj)
-    with st.expander("🔐 Administracija"):
-        if st.text_input("Vnesite geslo", type="password") == "brivnica2026":
-            podatki = sheet.get_all_records()
-            if podatki:
-                st.write("Pregled rezervacij:")
-                st.dataframe(podatki) # Dataframe izgleda bolj profesionalno kot navadna tabela
+if sheet:
+    # 3. REZERVACIJSKI OBRAZEC
+    with st.form("rezervacija", clear_on_submit=True):
+        st.markdown("### Rezervacija termina")
+        ime = st.text_input("Ime in priimek")
+        tel = st.text_input("Telefon")
+        datum = st.date_input("Datum", min_value=datetime.today())
+        
+        submit = st.form_submit_button("POTRDI")
+
+        if submit:
+            if ime and tel:
+                sheet.append_row([ime, tel, str(datum), "Novo"])
+                st.success(f"Termin za {ime} je zabeležen.")
             else:
-                st.write("Trenutno ni zabeleženih rezervacij.")
+                st.warning("Vnesite podatke.")
+else:
+    # Prikaz napake, če ključi niso pravi
+    st.error("Sistem trenutno ni dosegljiv. Preveri Secrets.")
 
-except Exception as e:
-    st.warning("Povezava s sistemom se vzpostavlja...")
-    # Izpis napake samo za admina (v kodi)
-    # st.write(str(e))
+st.markdown("---")
 
-st.caption("© 2024 Kavčič Cuts. Vse pravice pridržane.")
+# 4. ADMIN (Skrit spodaj)
+with st.expander("🔐"):
+    if st.text_input("Koda", type="password") == "brivnica2026":
+        if sheet:
+            st.dataframe(sheet.get_all_records())
+
+st.caption("© 2026 Kavčič Cuts")
