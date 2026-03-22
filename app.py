@@ -9,13 +9,18 @@ st.title("KAVČIČ CUTS")
 st.write("📍 Šegova ulica 14, Novo mesto")
 st.markdown("---")
 
-# 2. POVEZAVA PREKO SECRETS (Brez creds.json datoteke)
+# 2. POVEZAVA PREKO SECRETS
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 try:
-    # Program zdaj gleda v Streamlit Settings -> Secrets
-    creds_info = st.secrets["gcp_service_account"]
-    creds = Credentials.from_service_account_info(creds_info, scopes=scope)
+    # Ta del kode zdaj varno prebere tvoj dolgi ključ iz Streamlit nastavitev
+    creds_dict = st.secrets["gcp_service_account"]
+    
+    # POPRAVEK: Streamlit včasih napačno prebere \n, zato jih tukaj popravimo
+    if "private_key" in creds_dict:
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+    
+    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)
     
     # Odpre prvo tabelo v datoteki BarberBooking
@@ -31,18 +36,13 @@ try:
 
     if submit:
         if ime and telefon:
-            # Zapiše podatke v Google Tabelo
             sheet.append_row([ime, telefon, str(datum), "Čaka na uro"])
-            st.success(f"Hvala {ime}! Rezervacija za {datum} je poslana. Pokličemo vas za potrditev ure.")
+            st.success(f"Hvala {ime}! Rezervacija za {datum} je poslana.")
         else:
             st.warning("Prosimo, izpolni vsa polja.")
 
 except Exception as e:
-    st.error("Povezava še ni vzpostavljena. Preveri 'Secrets' v Streamlit nastavitvah.")
-    # Za razvijalca (tebe), da vidiš točno napako:
-    st.write(f"DEBUG INFO: {e}")
+    st.error("Napaka pri povezavi.")
+    st.info(f"Podrobnosti napake: {e}")
 
 st.markdown("---")
-with st.expander("🔐 Admin"):
-    if st.text_input("Geslo", type="password") == "brivnica2026":
-        st.table(sheet.get_all_records())
