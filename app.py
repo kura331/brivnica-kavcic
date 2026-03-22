@@ -13,17 +13,14 @@ st.markdown("---")
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 try:
-    # Ta del kode zdaj varno prebere tvoj dolgi ključ iz Streamlit nastavitev
-    creds_dict = st.secrets["gcp_service_account"]
+    # Preberemo Secrets kot navaden slovar
+    creds_dict = dict(st.secrets["gcp_service_account"])
     
-    # POPRAVEK: Streamlit včasih napačno prebere \n, zato jih tukaj popravimo
-    if "private_key" in creds_dict:
-        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-    
+    # Tukaj ključ samo uporabimo, ne spreminjamo ga v Secrets
     creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
     client = gspread.authorize(creds)
     
-    # Odpre prvo tabelo v datoteki BarberBooking
+    # Odpremo tabelo
     sheet = client.open("BarberBooking").get_worksheet(0)
     
     # 3. OBRAZEC ZA STRANKE
