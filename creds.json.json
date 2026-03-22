@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "subtle-hangar-453519-c3",
+  "private_key_id": "311b6910937461011e00adaa7ae63bbdc95e718b",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCylAdHNZrnrK2K\npOoO6DLU/APi4mN1eadtmDcVCE2EY+0dtsdSkg/64yE48OwbeCDMX6611cA0jduo\nfaMcCv6SePbj7jBppxe0xyoXcx15NpM520GL3tXQ9CuBsu5laNM5DT6voeYVzn5K\nTQZhGg2ACxHzc15pKrkjwNLKw0Wu0JCu1KHMu6Sro4ftATIM2mFKmvy13pfKEUzi\nG2SYPFYgPHZNirhoAVzv3I0iRjUFPOd+My5o4LTgiT5AEihDiwg2gJsVDgwfexuI\nm/BjBPrxsns28ASs6Oc0Gcrbfkuopl3PPFZA4d2fmYjwUkuJQ5oMafS31+MmTRTX\nF+tI8AXPAgMBAAECggEACwxgLDuuIHSX2A1pSGV9SkgSmtA+2bRzyLKzgGL0c3hr\nNydpIDwBLm3W+bA41go8nT2zkB8atnsAWBBN2HJQWxI41ClBvYek+Sjz+wzC32Oi\nVYtcfCGGllhE83qf3Tj7DdCP9vXL8mrFeCYD0Ft4R6+8+z7sBxL+7q4DXKAa3jyB\nT/vd4uqUKIJY2jWO/9t6XfY1IllHZyMUZKA9VPFBrxmTi0xyEeuYSTb53suIjITf\nzugkWY3zJ2FqetusjJdBRo21XZqA9DXt3VWqyFMJyytzYva2McwlYj0qG0IwwsLY\nMZUdYiV0F+nQykIgAU8JzQq8r4ocD3HwGksVQ+ptIQKBgQDgEfHSI+V1t0UOo7bN\nQpquH629ai81YcGx4htH2lbEJVDk5XE4zD/JeF1k4EZ/oKhKHgmqEIEdYC2LikqK\nuqtp2ro5ZVNh/1108mkk0gQBHgztwDmE7M/g5knswkNCTZ2pJzq++g1Qgn0i7c62\nWULHpAqeoIznM/uSnuPJpItzWwKBgQDMBouQWL/ZZfEeVW3XscN5U82mzi87UgOe\nN7CFI1eObAZBYLExlwVfTnZKqTPb8gCEOAKWVmBOAo2V0WyRJJ/GOy0W+bvvJwFR\nhju2DukaRB7d9VwZA+Kxt84/DOvRvB8qEHqK8s4YmkEkV7D7lu9eOvbBnfoxpCed\nOkaC2jSFnQKBgGLsyTyjiHzOKvjpop1AmJXjeoszxB/nRuLIFo9EgCYc63gDLFeN\nJWRHdcRBmB5kyaffVxj0LGzRt4nxxjM1ctRLMwiACa4sVhB5rZ4J8qajo8Wbpklf\nW+/I/D5BDfzJ05+IqFEEiLhQw/qVzzuGcQs/C0k5TLwOoTT8XUj7Em4dAoGAThFv\nE9OxzUjho17DAhbGGkXD2kDo98ThF4htpfQpC5kwJ5ING1GTP62xO85UxqNqKS2Z\nZ9czUIZPkPUqmrst29dG4JS8ob0GFyDK9lXsQh2wxfOdwwCmnKQdaijSj1Vxg1H8\n4fAYhnd316UqVoqhmyfqxZliY95RPitPUcCW+k0CgYB9VpsUumbINm3URC/SqQfc\naJz0axKSZbAEzOyw2O2AQqbtukEcfyVlkc3yGgVpiVR3b52kYnlcszjDp08xfXyp\ne0Sy5Ob779T4bzDKzaT+wf9jtDqxUoBuWiLInEI2V4+AYhiLsiq0p/bvFSwC9vCs\nn9CRY9+zdL7ND8tTqqEfiQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "brivnica-rezervacije@subtle-hangar-453519-c3.iam.gserviceaccount.com",
+  "client_id": "116453271150105083095",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/brivnica-rezervacije%40subtle-hangar-453519-c3.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
