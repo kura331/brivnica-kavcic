@@ -19,7 +19,7 @@ st.markdown("---")
 # 2. POVEZAVA Z GOOGLE TABLES
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 try:
-    creds = Credentials.from_service_account_file("creds.json", scopes=scope)
+    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
     client = gspread.authorize(creds)
     # Prepričaj se, da se tvoja tabela imenuje točno tako!
     sheet = client.open("BarberBooking").get_worksheet(0)
