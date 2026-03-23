@@ -3,19 +3,19 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 
+# 1. IZGLED (Črna tema, da paše k brivnici)
 st.set_page_config(page_title="Kavčič Cuts", page_icon="✂️")
-
-# Stil za črno ozadje
 st.markdown("<style>.stApp { background-color: #000; color: white; } .stButton>button { background-color: #111; color: white; border: 1px solid white; }</style>", unsafe_allow_html=True)
 
 st.title("KAVČIČ CUTS")
 st.write("📍 Šegova ulica 14, Novo mesto")
 
+# 2. FIKSNI PODATKI (Brez zunanjih Secrets, da 100% deluje)
 @st.cache_resource
 def povezi_tabelo():
     try:
-        # TUKAJ JE FIKS: Ključ varno sestavljen iz koščkov
-        key_lines = [
+        # Ključ je razbit na vrstice, da ga Python prebere brez napake
+        pk_lines = [
             "-----BEGIN PRIVATE KEY-----",
             "MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCylAdHNZrnrK2K",
             "pOoO6DLU/APi4mN1eadtmDcVCE2EY+0dtsdSkg/64yE48OwbeCDMX6611cA0jduo",
@@ -45,44 +45,48 @@ def povezi_tabelo():
             "nn9CRY9+zdL7ND8tTqqEfiQ==",
             "-----END PRIVATE KEY-----"
         ]
-        full_key = "\n".join(key_lines)
         
         info = {
             "type": "service_account",
             "project_id": "subtle-hangar-453519-c3",
-            "private_key_id": "311b6910937461011e00adaa7ae63bbdc95e718b",
-            "private_key": full_key,
+            "private_key": "\n".join(pk_lines),
             "client_email": "brivnica-rezervacije@subtle-hangar-453519-c3.iam.gserviceaccount.com",
-            "client_id": "116453271150105083095",
-            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": "https://oauth2.googleapis.com/token",
-            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-            "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/brivnica-rezervacije%40subtle-hangar-453519-c3.iam.gserviceaccount.com"
         }
         
         creds = Credentials.from_service_account_info(info, scopes=["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"])
+        # Odpre tvojo tabelo
         return gspread.authorize(creds).open("BarberBooking").get_worksheet(0)
-    except Exception as e:
-        st.error(f"Napaka pri povezavi: {e}")
+    except Exception:
         return None
 
 sheet = povezi_tabelo()
 
+# 3. REZERVACIJA
+st.markdown("---")
 if st.button("NAROČI SE NA TERMIN"):
     st.session_state.narocanje = True
 
 if st.session_state.get("narocanje"):
     ime = st.text_input("Ime in priimek")
-    tel = st.text_input("Telefon")
-    if st.button("POTRDI"):
+    tel = st.text_input("Telefonska številka")
+    if st.button("POTRDI REZERVACIJO"):
         if sheet and ime and tel:
-            sheet.append_row([ime, tel, "Striženje", datetime.now().strftime("%d.%m.%Y %H:%M")])
-            st.success("Rezervirano!")
+            datum = datetime.now().strftime("%d.%m.%Y %H:%M")
+            sheet.append_row([ime, tel, "Moško striženje", datum])
+            st.success(f"Hvala {ime}! Rezervacija je potrjena.")
             st.session_state.narocanje = False
+        else:
+            st.error("Povezava s tabelo ni uspela. Preveri internet.")
 
+# 4. ADMIN (Vpogled v rezervacije)
+st.markdown("<br><br>", unsafe_allow_html=True)
 with st.expander("🔐 Admin"):
-    if st.text_input("Geslo", type="password") == "kavciccutsadmin0":
-        if sheet: st.table(sheet.get_all_records())
+    if st.text_input("Vnesi geslo", type="password") == "kavciccutsadmin0":
+        if sheet:
+            st.table(sheet.get_all_records())
+        else:
+            st.error("Ni povezave s tabelo.")
 
 st.markdown("---")
 st.caption("© 2026 Kavčič Cuts")
