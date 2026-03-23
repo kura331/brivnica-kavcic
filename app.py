@@ -13,32 +13,31 @@ def get_base64(bin_file):
         with open(bin_file, 'rb') as f:
             return base64.b64encode(f.read()).decode()
     except:
-        # Če tvoje slike ni, uporabi tole privzeto (rezervni plan)
         return ""
 
 barber_img = get_base64('barber_pole.png')
-# Če nimaš svoje slike, uporabi URL do simbola
+# Če nimaš svoje slike, koda uporabi ta spletni simbol, da vidiš efekt
 img_url = f"data:image/png;base64,{barber_img}" if barber_img else "https://cdn-icons-png.flaticon.com/512/1010/1010775.png"
 
-# --- CSS ZA ČRNO TEMO IN ANIMACIJO ---
+# --- CSS ZA ČRNO TEMO, ČRNE GUMBE IN VIDNO ANIMACIJO ---
 st.markdown(f"""
     <style>
     /* Črno glavno ozadje */
     [data-testid="stAppViewContainer"] {{
-        background-color: #000000;
+        background-color: #000000 !important;
     }}
 
-    /* Animirana plast z barber simboli */
+    /* Animirana plast v ozadju - nujno pred vsem ostalim */
     [data-testid="stAppViewContainer"]::before {{
         content: "";
-        position: absolute;
+        position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
         background-image: url("{img_url}");
         background-repeat: repeat;
-        background-size: 70px 140px;
-        opacity: 0.15; /* Subtilno vidni simboli */
-        animation: barberSlide 50s linear infinite;
-        pointer-events: none;
+        background-size: 80px 160px;
+        opacity: 0.2; /* Tukaj nastaviš, kako močno se vidijo simboli */
+        animation: barberSlide 40s linear infinite;
+        z-index: 0;
     }}
 
     @keyframes barberSlide {{
@@ -46,40 +45,41 @@ st.markdown(f"""
         to {{ background-position: 500px 1000px; }}
     }}
 
-    /* Sredinski del - zdaj TEMEN z robom */
+    /* Sredinski del - narejen prosojno, da se vidi ozadje! */
     [data-testid="stVerticalBlock"] {{
-        background-color: rgba(20, 20, 20, 0.8); /* Skoraj črna, rahlo prosojna */
-        padding: 2.5rem;
+        background-color: rgba(30, 30, 30, 0.6) !important; /* Prosojna črna */
+        padding: 2rem;
         border-radius: 15px;
-        border: 1px solid #333;
-        color: white;
+        border: 1px solid #444;
+        z-index: 1;
     }}
 
-    /* Naslovi in teksti v beli */
-    h1, h2, h3, p, label, .stMarkdown {{
-        color: white !important;
-    }}
-
-    /* Gumbi */
+    /* GUMB NAREJEN ČRNO (z belim robom, da se vidi) */
     .stButton>button {{
-        width: auto;
-        padding: 0.4rem 1.5rem;
-        border-radius: 4px;
-        background-color: #ffffff;
-        color: #000000;
-        border: none;
+        width: 100%;
+        padding: 0.6rem;
+        border-radius: 5px;
+        background-color: #000000 !important; /* Črn gumb */
+        color: white !important;
+        border: 1px solid #ffffff !important; /* Bel rob za kontrast */
         font-weight: bold;
+        text-transform: uppercase;
     }}
     
     .stButton>button:hover {{
-        background-color: #cccccc;
+        background-color: #222222 !important;
+        border-color: #cccccc !important;
     }}
 
-    /* Input polja naj bodo temna */
-    input, select, .stSelectbox {{
+    /* Teksti v beli barvi */
+    h1, h2, h3, p, label {{
+        color: white !important;
+    }}
+    
+    /* Popravek za vnosna polja */
+    input, select, .stSelectbox div {{
         background-color: #111 !important;
         color: white !important;
-        border: 1px solid #444 !important;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -88,7 +88,7 @@ st.title("KAVČIČ CUTS")
 st.write("📍 Šegova ulica 14, Novo mesto")
 st.markdown("---")
 
-# 2. POVEZAVA (GIP)
+# 2. POVEZAVA Z GOOGLE SHEETS
 @st.cache_resource
 def povezi():
     try:
@@ -107,51 +107,44 @@ if "korak" not in st.session_state:
 
 # --- LOGIKA KORAKOV ---
 if st.session_state.korak == 1:
-    st.subheader("Dobrodošli")
+    st.markdown("### Dobrodošli")
+    # Gumb je zdaj črn z belim robom
     if st.button("NAROČI SE NA TERMIN"):
         st.session_state.korak = 2
         st.rerun()
 
 elif st.session_state.korak == 2:
-    st.subheader("Vpišite podatke")
+    st.markdown("### Podatki")
     ime = st.text_input("Ime in priimek")
     tel = st.text_input("Telefon")
     storitev = st.selectbox("Izberite storitev:", ["Frizura", "Brada", "Oboje"])
     datum = st.date_input("Izberite datum", min_value=datetime.today())
     
-    col1, col2 = st.columns([1,1])
-    with col1:
-        if st.button("NAZAJ"):
-            st.session_state.korak = 1
+    if st.button("NADALJUJ"):
+        if ime and tel:
+            st.session_state.p = {"ime": ime, "tel": tel, "storitev": storitev, "datum": str(datum)}
+            st.session_state.korak = 3
             st.rerun()
-    with col2:
-        if st.button("NADALJUJ"):
-            if ime and tel:
-                st.session_state.p = {"ime": ime, "tel": tel, "storitev": storitev, "datum": str(datum)}
-                st.session_state.korak = 3
-                st.rerun()
-            else:
-                st.warning("Manjkajo podatki!")
+        else:
+            st.warning("Izpolni vse.")
 
 elif st.session_state.korak == 3:
     p = st.session_state.p
-    st.subheader("Potrditev")
-    st.write(f"**Stranka:** {p['ime']}")
-    st.write(f"**Storitev:** {p['storitev']}")
-    st.write(f"**Datum:** {p['datum']}")
+    st.markdown("### Potrditev")
+    st.write(f"Stranka: {p['ime']}")
+    st.write(f"Storitev: {p['storitev']}")
     
-    if st.button("POTRDI REZERVACIJO"):
+    if st.button("POTRDI"):
         if sheet:
             sheet.append_row([p['ime'], p['tel'], p['storitev'], p['datum']])
-            st.success("Uspešno rezervirano!")
-            if st.button("NAZAJ NA DOMOV"):
+            st.success("Rezervirano!")
+            if st.button("DOMOV"):
                 st.session_state.korak = 1
                 st.rerun()
 
 st.markdown("---")
-# ADMIN
-with st.expander("🔐 Admin"):
-    if st.text_input("Geslo", type="password") == "brivnica2026":
+with st.expander("🔐 Admin"): #
+    if st.text_input("Geslo", type="password") == "brivnica2026": #
         if sheet:
             st.dataframe(sheet.get_all_records())
 
