@@ -7,7 +7,7 @@ import base64
 # 1. KONFIGURACIJA
 st.set_page_config(page_title="Kavčič Cuts", page_icon="✂️", layout="centered")
 
-# --- Funkcija za ozadje ---
+# Funkcija za varno nalaganje slike in pretvorbo v ozadje
 def get_base64(bin_file):
     try:
         with open(bin_file, 'rb') as f:
@@ -16,28 +16,28 @@ def get_base64(bin_file):
         return ""
 
 barber_img = get_base64('barber_pole.png')
-# Če nimaš svoje slike, koda uporabi ta spletni simbol, da vidiš efekt
-img_url = f"data:image/png;base64,{barber_img}" if barber_img else "https://cdn-icons-png.flaticon.com/512/1010/1010775.png"
+# Če slike še nisi naložil, bo ozadje ostalo črno
+img_url = f"data:image/png;base64,{barber_img}" if barber_img else ""
 
-# --- CSS ZA ČRNO TEMO, ČRNE GUMBE IN VIDNO ANIMACIJO ---
+# --- CSS ZA ČRNO TEMO, DROBNE POLI IN GUMBE ---
 st.markdown(f"""
     <style>
-    /* Črno glavno ozadje */
-    [data-testid="stAppViewContainer"] {{
+    /* Temno osnovno ozadje */
+    .stApp {{
         background-color: #000000 !important;
     }}
-
-    /* Animirana plast v ozadju - nujno pred vsem ostalim */
-    [data-testid="stAppViewContainer"]::before {{
+    
+    /* Animirano ozadje z DROBNIMI simboli */
+    .stApp::before {{
         content: "";
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
-        background-image: url("{img_url}");
-        background-repeat: repeat;
-        background-size: 80px 160px;
-        opacity: 0.2; /* Tukaj nastaviš, kako močno se vidijo simboli */
-        animation: barberSlide 40s linear infinite;
-        z-index: 0;
+        background-image: url("{img_url}") !important;
+        background-repeat: repeat !important;
+        background-size: 40px 80px !important; /* Tukaj jih naredimo drobne! */
+        opacity: 0.12 !important; /* Zelo subtilno */
+        animation: barberSlide 60s linear infinite !important;
+        z-index: -1;
     }}
 
     @keyframes barberSlide {{
@@ -45,40 +45,33 @@ st.markdown(f"""
         to {{ background-position: 500px 1000px; }}
     }}
 
-    /* Sredinski del - narejen prosojno, da se vidi ozadje! */
+    /* Glavni blok obrazca - prosojen, da se vidi ozadje */
     [data-testid="stVerticalBlock"] {{
-        background-color: rgba(30, 30, 30, 0.6) !important; /* Prosojna črna */
+        background-color: rgba(20, 20, 20, 0.7) !important;
         padding: 2rem;
-        border-radius: 15px;
-        border: 1px solid #444;
-        z-index: 1;
+        border-radius: 12px;
+        border: 1px solid #333;
     }}
 
-    /* GUMB NAREJEN ČRNO (z belim robom, da se vidi) */
+    /* VSI GUMBI ČRNI Z BELIM ROBOM */
     .stButton>button {{
-        width: 100%;
-        padding: 0.6rem;
-        border-radius: 5px;
-        background-color: #000000 !important; /* Črn gumb */
+        width: 100% !important;
+        background-color: #000000 !important;
         color: white !important;
-        border: 1px solid #ffffff !important; /* Bel rob za kontrast */
-        font-weight: bold;
+        border: 1px solid #ffffff !important;
+        font-weight: bold !important;
         text-transform: uppercase;
+        border-radius: 4px;
+        transition: 0.3s;
     }}
     
     .stButton>button:hover {{
-        background-color: #222222 !important;
-        border-color: #cccccc !important;
+        background-color: #222 !important;
+        border-color: #aaa !important;
     }}
 
-    /* Teksti v beli barvi */
-    h1, h2, h3, p, label {{
-        color: white !important;
-    }}
-    
-    /* Popravek za vnosna polja */
-    input, select, .stSelectbox div {{
-        background-color: #111 !important;
+    /* Teksti v beli */
+    h1, h2, h3, p, label, .stMarkdown {{
         color: white !important;
     }}
     </style>
@@ -88,27 +81,26 @@ st.title("KAVČIČ CUTS")
 st.write("📍 Šegova ulica 14, Novo mesto")
 st.markdown("---")
 
-# 2. POVEZAVA Z GOOGLE SHEETS
+# 2. POVEZAVA (Z odpravo PEM napake)
 @st.cache_resource
 def povezi():
     try:
         info = dict(st.secrets["gcp_service_account"])
-        info["private_key"] = info["private_key"].replace("\\n", "\n")
+        info["private_key"] = info["private_key"].replace("\\n", "\n") # Popravek za PEM
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds = Credentials.from_service_account_info(info, scopes=scope)
         return gspread.authorize(creds).open("BarberBooking").get_worksheet(0)
-    except:
+    except Exception as e:
         return None
 
 sheet = povezi()
 
+# 3. GLAVNA LOGIKA
 if "korak" not in st.session_state:
     st.session_state.korak = 1
 
-# --- LOGIKA KORAKOV ---
 if st.session_state.korak == 1:
     st.markdown("### Dobrodošli")
-    # Gumb je zdaj črn z belim robom
     if st.button("NAROČI SE NA TERMIN"):
         st.session_state.korak = 2
         st.rerun()
@@ -118,23 +110,18 @@ elif st.session_state.korak == 2:
     ime = st.text_input("Ime in priimek")
     tel = st.text_input("Telefon")
     storitev = st.selectbox("Izberite storitev:", ["Frizura", "Brada", "Oboje"])
-    datum = st.date_input("Izberite datum", min_value=datetime.today())
+    datum = st.date_input("Datum", min_value=datetime.today())
     
-    if st.button("NADALJUJ"):
+    if st.button("NADALJUJ"): #
         if ime and tel:
             st.session_state.p = {"ime": ime, "tel": tel, "storitev": storitev, "datum": str(datum)}
             st.session_state.korak = 3
             st.rerun()
-        else:
-            st.warning("Izpolni vse.")
 
 elif st.session_state.korak == 3:
     p = st.session_state.p
-    st.markdown("### Potrditev")
-    st.write(f"Stranka: {p['ime']}")
-    st.write(f"Storitev: {p['storitev']}")
-    
-    if st.button("POTRDI"):
+    st.write(f"**Stranka:** {p['ime']} | **Storitev:** {p['storitev']}")
+    if st.button("POTRDI REZERVACIJO"):
         if sheet:
             sheet.append_row([p['ime'], p['tel'], p['storitev'], p['datum']])
             st.success("Rezervirano!")
@@ -143,9 +130,16 @@ elif st.session_state.korak == 3:
                 st.rerun()
 
 st.markdown("---")
+
+# 4. ADMIN DEL Z GUMBOM
 with st.expander("🔐 Admin"): #
-    if st.text_input("Geslo", type="password") == "brivnica2026": #
+    geslo = st.text_input("Geslo", type="password") #
+    if geslo == "brivnica2026": #
         if sheet:
             st.dataframe(sheet.get_all_records())
+            if st.button("OSVEŽI / NADALJUJ"): # Gumb v adminu
+                st.rerun()
+        else:
+            st.error("Napaka pri povezavi s tabelo.")
 
 st.caption("© 2026 Kavčič Cuts")
