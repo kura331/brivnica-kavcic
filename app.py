@@ -3,7 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 
-# 1. DIZAJN (Črna tema in črni gumbi z belim robom)
+# 1. DIZAJN (Črna tema in črni gumbi)
 st.set_page_config(page_title="Kavčič Cuts", page_icon="✂️", layout="centered")
 
 st.markdown("""
@@ -19,9 +19,8 @@ st.markdown("""
         width: 100% !important;
         background-color: #000000 !important;
         color: white !important;
-        border: 1px solid #ffffff !important;
+        border: 2px solid #ffffff !important;
         font-weight: bold !important;
-        text-transform: uppercase;
     }
     h1, h2, h3, p, label { color: white !important; }
     input, select, .stSelectbox div {
@@ -40,16 +39,30 @@ st.markdown("---")
 @st.cache_resource
 def povezi():
     try:
-        info = dict(st.secrets["gcp_service_account"])
-        # Avtomatsko popravimo znake za nove vrstice v ključu
-        info["private_key"] = info["private_key"].replace("\\n", "\n")
+        # Prebere Secrets
+        s = st.secrets["gcp_service_account"]
+        # Ta del popravi PEM napako (InvalidByte), ki si jo imel na sliki
+        fixed_key = s["private_key"].replace("\\n", "\n")
+        
+        info = {
+            "type": s["type"],
+            "project_id": s["project_id"],
+            "private_key_id": s["private_key_id"],
+            "private_key": fixed_key,
+            "client_email": s["client_email"],
+            "client_id": s["client_id"],
+            "auth_uri": s["auth_uri"],
+            "token_uri": s["token_uri"],
+            "auth_provider_x509_cert_url": s["auth_provider_x509_cert_url"],
+            "client_x509_cert_url": s["client_x509_cert_url"]
+        }
         
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds = Credentials.from_service_account_info(info, scopes=scope)
-        # Odpremo tabelo BarberBooking
+        # Odpre tabelo BarberBooking
         return gspread.authorize(creds).open("BarberBooking").get_worksheet(0)
     except Exception as e:
-        st.error(f"Povezava ni uspela. Preveri, če je tabela deljena z emailom v Secrets. Napaka: {e}")
+        st.error(f"Povezava ni uspela: {e}")
         return None
 
 sheet = povezi()
@@ -78,12 +91,12 @@ elif st.session_state.korak == 2:
 
 elif st.session_state.korak == 3:
     p = st.session_state.p
-    st.write(f"**Stranka:** {p['ime']} | **Storitev:** {p['storitev']}")
+    st.write(f"**Storitev:** {p['storitev']} | **Datum:** {p['datum']}")
     if st.button("POTRDI REZERVACIJO"):
         if sheet:
             sheet.append_row([p['ime'], p['tel'], p['storitev'], p['datum']])
-            st.success("Rezervacija je bila uspešna!")
-            if st.button("NAZAJ NA ZAČETEK"):
+            st.success("Rezervirano! Se vidimo!")
+            if st.button("DOMOV"):
                 st.session_state.korak = 1
                 st.rerun()
 
@@ -101,6 +114,7 @@ with st.expander("🔐 Admin"):
                 st.info("Ni še rezervacij.")
             if st.button("OSVEŽI"):
                 st.rerun()
+        else:
+            st.error("Napaka pri povezavi s tabelo.") #
 
-# 5. FOOTER
 st.caption("© 2026 Kavčič Cuts")
