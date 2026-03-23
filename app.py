@@ -10,8 +10,9 @@ st.set_page_config(page_title="Kavčič Cuts", page_icon="✂️")
 st.markdown("""
     <style>
     .stApp { background-color: #000000; color: white; }
-    .stButton>button { background-color: #111; color: white; border: 1px solid white; border-radius: 5px; }
+    .stButton>button { background-color: #111; color: white; border: 1px solid white; border-radius: 5px; width: 100%; }
     input { background-color: #222 !important; color: white !important; border: 1px solid #444 !important; }
+    .stExpander { border: 1px solid #333; background-color: #000; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -24,7 +25,7 @@ def povezi_tabelo():
     try:
         s = st.secrets["gcp_service_account"]
         
-        # Popravek za PEM ključ (rešitev za rdečo napako)
+        # Popravek za PEM ključ
         pk = s["private_key"].replace("\\n", "\n")
         
         credentials_info = {
@@ -44,10 +45,9 @@ def povezi_tabelo():
             credentials_info, 
             scopes=["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         )
-        # Odpre tabelo BarberBooking
         return gspread.authorize(creds).open("BarberBooking").get_worksheet(0)
     except Exception as e:
-        st.error(f"Povezava ni uspela. Preveri Secrets in deljenje tabele. Napaka: {e}")
+        st.error(f"Povezava ni uspela: {e}")
         return None
 
 sheet = povezi_tabelo()
@@ -58,12 +58,10 @@ if st.button("NAROČI SE NA TERMIN"):
     st.session_state.narocanje = True
 
 if st.session_state.get("narocanje"):
-    with st.form("rezervacija_form"):
+    with st.container():
         ime = st.text_input("Ime in priimek")
         tel = st.text_input("Telefonska številka")
-        oddaj = st.form_submit_button("POTRDI REZERVACIJO")
-        
-        if oddaj:
+        if st.button("POTRDI REZERVACIJO"):
             if sheet and ime and tel:
                 datum = datetime.now().strftime("%d.%m.%Y %H:%M")
                 sheet.append_row([ime, tel, "Moško striženje", datum])
@@ -83,7 +81,6 @@ with st.expander("🔐 Admin"):
         else:
             st.error("Ni povezave s tabelo.")
 
-# 5. NOGA (FOOTER) - DODANO PO TVOJI ŽELJI
+# 5. NOGA (FOOTER) - Z LETNICO
 st.markdown("---")
 st.caption("© 2026 Kavčič Cuts")
-with st.expander("🔐
