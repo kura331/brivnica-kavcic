@@ -3,7 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 
-# 1. DIZAJN
+# 1. DIZAJN (Črna tema in črni gumbi z belim robom)
 st.set_page_config(page_title="Kavčič Cuts", page_icon="✂️", layout="centered")
 
 st.markdown("""
@@ -21,8 +21,14 @@ st.markdown("""
         color: white !important;
         border: 1px solid #ffffff !important;
         font-weight: bold !important;
+        text-transform: uppercase;
     }
     h1, h2, h3, p, label { color: white !important; }
+    input, select, .stSelectbox div {
+        background-color: #000000 !important;
+        color: white !important;
+        border: 1px solid #444 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -30,29 +36,20 @@ st.title("KAVČIČ CUTS")
 st.write("📍 Šegova ulica 14, Novo mesto")
 st.markdown("---")
 
-# 2. POVEZAVA (S popravkom za PEM format)
+# 2. VARNA POVEZAVA
 @st.cache_resource
 def povezi():
     try:
-        # Preberemo podatke iz Secrets
         info = dict(st.secrets["gcp_service_account"])
-        
-        # POPRAVEK: Ta del kode očisti ključ in prepreči "PEM file" napako
-        raw_key = info["private_key"]
-        if "\\n" in raw_key:
-            clean_key = raw_key.replace("\\n", "\n")
-        else:
-            clean_key = raw_key
-            
-        info["private_key"] = clean_key
+        # Avtomatsko popravimo znake za nove vrstice v ključu
+        info["private_key"] = info["private_key"].replace("\\n", "\n")
         
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds = Credentials.from_service_account_info(info, scopes=scope)
-        
-        # POZOR: Tabela se mora v Google Sheets imenovati natančno: BarberBooking
+        # Odpremo tabelo BarberBooking
         return gspread.authorize(creds).open("BarberBooking").get_worksheet(0)
     except Exception as e:
-        st.error(f"Napaka pri povezavi: {e}")
+        st.error(f"Povezava ni uspela. Preveri, če je tabela deljena z emailom v Secrets. Napaka: {e}")
         return None
 
 sheet = povezi()
@@ -68,7 +65,7 @@ if st.session_state.korak == 1:
         st.rerun()
 
 elif st.session_state.korak == 2:
-    st.markdown("### Podatki")
+    st.markdown("### Vpišite podatke")
     ime = st.text_input("Ime in priimek")
     tel = st.text_input("Telefon")
     storitev = st.selectbox("Izberite storitev:", ["Frizura", "Brada", "Oboje"])
@@ -81,11 +78,11 @@ elif st.session_state.korak == 2:
 
 elif st.session_state.korak == 3:
     p = st.session_state.p
-    st.write(f"**Storitev:** {p['storitev']} | **Datum:** {p['datum']}")
+    st.write(f"**Stranka:** {p['ime']} | **Storitev:** {p['storitev']}")
     if st.button("POTRDI REZERVACIJO"):
         if sheet:
             sheet.append_row([p['ime'], p['tel'], p['storitev'], p['datum']])
-            st.success("Rezervirano!")
+            st.success("Rezervacija je bila uspešna!")
             if st.button("NAZAJ NA ZAČETEK"):
                 st.session_state.korak = 1
                 st.rerun()
@@ -101,6 +98,9 @@ with st.expander("🔐 Admin"):
             if podatki:
                 st.dataframe(podatki)
             else:
-                st.write("Ni novih rezervacij.")
+                st.info("Ni še rezervacij.")
             if st.button("OSVEŽI"):
                 st.rerun()
+
+# 5. FOOTER
+st.caption("© 2026 Kavčič Cuts")
