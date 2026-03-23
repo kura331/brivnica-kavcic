@@ -3,20 +3,19 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 
-# 1. KONFIGURACIJA
+# 1. KONFIGURACIJA (Črna tema in gumbi z belim robom)
 st.set_page_config(page_title="Kavčič Cuts", page_icon="✂️", layout="centered")
 
 st.markdown("""
     <style>
-    .stApp {
-        background-color: #000000 !important;
-    }
+    .stApp { background-color: #000000 !important; }
     [data-testid="stVerticalBlock"] {
         background-color: #111111 !important;
         padding: 2.5rem;
         border-radius: 15px;
         border: 1px solid #333;
     }
+    /* Gumbi: Črni z močnim belim robom */
     .stButton>button {
         width: 100% !important;
         background-color: #000000 !important;
@@ -29,9 +28,7 @@ st.markdown("""
         background-color: #ffffff !important;
         color: #000000 !important;
     }
-    h1, h2, h3, p, label, .stMarkdown {
-        color: white !important;
-    }
+    h1, h2, h3, p, label { color: white !important; }
     input, select, .stSelectbox div {
         background-color: #000000 !important;
         color: white !important;
@@ -44,7 +41,7 @@ st.title("KAVČIČ CUTS")
 st.write("📍 Šegova ulica 14, Novo mesto")
 st.markdown("---")
 
-# 2. POVEZAVA Z GOOGLE SHEETS
+# 2. POVEZAVA (Vrstica, ki jo moraš preveriti)
 @st.cache_resource
 def povezi():
     try:
@@ -52,8 +49,10 @@ def povezi():
         info["private_key"] = info["private_key"].replace("\\n", "\n")
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds = Credentials.from_service_account_info(info, scopes=scope)
+        # TUKAJ JE IME TABELE: BarberBooking
         return gspread.authorize(creds).open("BarberBooking").get_worksheet(0)
-    except:
+    except Exception as e:
+        st.error(f"Napaka pri povezavi: {e}")
         return None
 
 sheet = povezi()
@@ -61,7 +60,7 @@ sheet = povezi()
 if "korak" not in st.session_state:
     st.session_state.korak = 1
 
-# 3. KORAKI REZERVACIJE
+# 3. KORAKI NAROČANJA
 if st.session_state.korak == 1:
     st.markdown("### Dobrodošli")
     if st.button("NAROČI SE NA TERMIN"):
@@ -75,6 +74,7 @@ elif st.session_state.korak == 2:
     storitev = st.selectbox("Izberite storitev:", ["Frizura", "Brada", "Oboje"])
     datum = st.date_input("Datum", min_value=datetime.today())
     
+    # Gumb nadaljuj za stranko
     if st.button("NADALJUJ"):
         if ime and tel:
             st.session_state.p = {"ime": ime, "tel": tel, "storitev": storitev, "datum": str(datum)}
@@ -95,15 +95,11 @@ elif st.session_state.korak == 3:
 st.markdown("---")
 
 # 4. ADMIN Z NOVIM GESLOM
-with st.expander("🔐 Admin"): #
-    vpisano_geslo = st.text_input("Geslo", type="password")
-    # Novo geslo, ki si ga zahteval:
-    if vpisano_geslo == "kavciccutsadmin0": 
+with st.expander("🔐 Admin"):
+    vpisano = st.text_input("Geslo", type="password")
+    if vpisano == "kavciccutsadmin0": # Tvoje novo geslo
         if sheet:
             st.dataframe(sheet.get_all_records())
-            if st.button("NADALJUJ (OSVEŽI)"): #
+            # Gumb nadaljuj v adminu za osvežitev
+            if st.button("NADALJUJ (OSVEŽI)"):
                 st.rerun()
-        else:
-            st.error("Napaka pri povezavi s tabelo.") #
-
-st.caption("© 2026 Kavčič Cuts")
