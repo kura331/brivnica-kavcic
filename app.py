@@ -6,58 +6,89 @@ from datetime import datetime
 # 1. KONFIGURACIJA
 st.set_page_config(page_title="Kavčič Cuts", page_icon="✂️")
 
-# Glavni naslov in lokacija
+# Stilski popravek za čist videz
+st.markdown("""
+    <style>
+    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #0e1117; color: white; border: 1px solid #444; }
+    .stButton>button:hover { border-color: #fff; color: #fff; }
+    </style>
+    """, unsafe_allow_html=True)
+
 st.title("KAVČIČ CUTS")
 st.write("📍 Šegova ulica 14, Novo mesto")
 st.markdown("---")
 
-# 2. VARNA POVEZAVA
-def poveži_tabelo():
+# 2. POVEZAVA Z GIP
+@st.cache_resource
+def povezi_tabelo():
     try:
-        # Preberemo Secrets
         info = dict(st.secrets["gcp_service_account"])
-        
-        # Popravek za PEM napako
-        if "private_key" in info:
-            info["private_key"] = info["private_key"].replace("\\n", "\n")
-            
+        info["private_key"] = info["private_key"].replace("\\n", "\n")
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds = Credentials.from_service_account_info(info, scopes=scope)
-        client = gspread.authorize(creds)
-        return client.open("BarberBooking").get_worksheet(0)
+        return gspread.authorize(creds).open("BarberBooking").get_worksheet(0)
     except:
         return None
 
-sheet = poveži_tabelo()
+sheet = povezi_tabelo()
 
-if sheet:
-    # 3. OBRAZEC ZA STRANKE
-    st.markdown("### Rezervacija termina")
-    with st.form("rezervacija", clear_on_submit=True):
-        ime = st.text_input("Ime in priimek")
-        tel = st.text_input("Telefon")
-        datum = st.date_input("Datum", min_value=datetime.today())
-        
-        submit = st.form_submit_button("POTRDI")
+# 3. LOGIKA KORAKOV (Session State)
+if "korak" not in st.session_state:
+    st.session_state.korak = 1
 
-        if submit:
+# --- KORAK 1: ZAČETNI MENU ---
+if st.session_state.korak == 1:
+    st.markdown("### Dobrodošli")
+    st.write("Za rezervacijo termina kliknite spodnji gumb.")
+    if st.button("NAROČI SE NA STRIŽENJE"):
+        st.session_state.korak = 2
+        st.rerun()
+
+# --- KORAK 2: VNOS PODATKOV ---
+elif st.session_state.korak == 2:
+    st.markdown("### Podatki za rezervacijo")
+    ime = st.text_input("Ime in priimek")
+    tel = st.text_input("Telefonska številka")
+    datum = st.date_input("Izberite datum", min_value=datetime.today())
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("NAZAJ"):
+            st.session_state.korak = 1
+            st.rerun()
+    with col2:
+        if st.button("NADALJUJ"):
             if ime and tel:
-                sheet.append_row([ime, tel, str(datum), "Novo"])
-                st.success(f"Rezervacija za {ime} je oddana.")
+                st.session_state.podatki = {"ime": ime, "tel": tel, "datum": str(datum)}
+                st.session_state.korak = 3
+                st.rerun()
             else:
-                st.warning("Prosimo, vnesite vse podatke.")
-else:
-    # Napaka, če poverilnice niso pravilne
-    st.error("Sistem se osvežuje. Poskusite ponovno čez trenutek.")
+                st.warning("Prosimo, izpolnite vsa polja.")
+
+# --- KORAK 3: POTRDITEV ---
+elif st.session_state.korak == 3:
+    p = st.session_state.podatki
+    st.markdown("### Potrdite rezervacijo")
+    st.write(f"**Ime:** {p['ime']}")
+    st.write(f"**Telefon:** {p['tel']}")
+    st.write(f"**Datum:** {p['datum']}")
+    st.markdown("---")
+    
+    if st.button("POTRDI REZERVACIJO"):
+        if sheet:
+            sheet.append_row([p['ime'], p['tel'], p['datum'], "Novo"])
+            st.success("Vaša rezervacija je bila uspešno poslana!")
+            if st.button("DOMOV"):
+                st.session_state.korak = 1
+                st.rerun()
+        else:
+            st.error("Napaka pri povezavi s bazo.")
 
 st.markdown("---")
-
-# 4. ADMIN DEL (Z napisom Admin)
+# ADMIN DEL (Vedno dostopen spodaj)
 with st.expander("🔐 Admin"):
-    koda = st.text_input("Vnesite admin kodo", type="password")
-    if koda == "brivnica2026":
+    if st.text_input("Geslo", type="password") == "brivnica2026":
         if sheet:
-            st.markdown("#### Pregled vseh rezervacij")
             st.dataframe(sheet.get_all_records())
 
 st.caption("© 2026 Kavčič Cuts")
